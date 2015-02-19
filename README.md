@@ -12,6 +12,9 @@ MongoDB interface. See below for installation instructions.
 ##Requirements
 * [CodeIgniter MongoDB Active Record Library](https://github.com/alexbilbie/codeigniter-mongodb-library/tree/v2)
 
+##Compatibility 
+CI 2.2.*
+
 ##Installation
 * Place `MY_Session.php` file in `application/libraries` directory.
 

@@ -202,14 +202,32 @@ class MY_Session extends CI_Session {
 		}
 		else
 		{
-			// encryption was not used, so we need to check the md5 hash
-			$hash	 = substr($session, strlen($session)-32); // get last 32 chars
-			$session = substr($session, 0, strlen($session)-32);
+			// HMAC authentication
+			$len = strlen($session) - 40;
 
-			// Does the md5 hash match?  This is to prevent manipulation of session data in userspace
-			if ($hash !==  md5($session.$this->encryption_key))
+			if ($len <= 0)
 			{
-				log_message('error', 'The session cookie data did not match what was expected. This could be a possible hacking attempt.');
+				log_message('error', 'Session: The session cookie was not signed.');
+				return FALSE;
+			}
+
+			// Check cookie authentication
+			$hmac = substr($session, $len);
+			$session = substr($session, 0, $len);
+
+			// Time-attack-safe comparison
+			$hmac_check = hash_hmac('sha1', $session, $this->encryption_key);
+			$diff = 0;
+
+			for ($i = 0; $i < 40; $i++)
+			{
+				$xor = ord($hmac[$i]) ^ ord($hmac_check[$i]);
+				$diff |= $xor;
+			}
+
+			if ($diff !== 0)
+			{
+				log_message('error', 'Session: HMAC mismatch. The session cookie data did not match what was expected.');
 				$this->sess_destroy();
 				return FALSE;
 			}
